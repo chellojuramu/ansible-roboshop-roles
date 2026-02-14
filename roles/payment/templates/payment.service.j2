@@ -2,11 +2,10 @@
 Description = Payment Service
 
 [Service]
-# Security Hardening: Running as a restricted system user
-User=roboshop
+# Change this back to root so uWSGI can perform setgid()
+User=root
 WorkingDirectory=/app
 
-# Dynamic Environment Variables
 Environment=CART_HOST="{{ CART_HOST }}"
 Environment=CART_PORT=8080
 Environment=USER_HOST="{{ USER_HOST }}"
@@ -15,7 +14,6 @@ Environment=AMQP_HOST="{{ RABBITMQ_HOST }}"
 Environment=AMQP_USER=roboshop
 Environment=AMQP_PASS=roboshop123
 
-# Python uWSGI Execution
 ExecStart=/usr/local/bin/uwsgi --ini payment.ini
 ExecStop=/bin/kill -9 $MAINPID
 SyslogIdentifier=payment
