@@ -53,5 +53,12 @@ This project implements advanced Ansible features to manage a complex 3-tier app
 
 ### 1. Provision Infrastructure
 Deploy the AWS resources using the automation script:
-```bash
-ansible-playbook 01-create-infrastructure.yaml
+
+### To deploy all services using the centralized orchestration and ### Deploy Specific Service
+To target a single microservice (e.g., Payment) utilizing the variable-driven logic :
+
+```
+ansible-playbook -e component=all roboshop.yaml 
+
+
+ansible-playbook -e component=payment roboshop.yaml
