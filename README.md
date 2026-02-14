@@ -12,16 +12,15 @@ Following the **DRY (Don't Repeat Yourself)** principle, the automation is organ
 * **`ansible.cfg`**: Project-level configuration to manage role paths and default settings.
 * **`inventory.ini`**: Environment-specific host definitions.
 
-
-
 ## 🎯 Modular Automation Strategy
 
 This project implements advanced Ansible features to manage a complex 3-tier application:
 
-* **Common Role Integration**: Universal system tasks like `app_setup` and `nodejs_setup` are extracted into a `common` role to be shared across all microservices.
-* **Role Dependencies**: Specific services leverage the `meta` directory to automatically trigger prerequisite roles (e.g., ensuring `common` is ready before `catalogue` starts).
-* **Dynamic Templating**: Uses Jinja2 templates (`.j2`) to inject environment variables into systemd unit files at runtime.
-* **Confidentiality Management**: Built to separate non-confidential data (URLs) from confidential data (passwords).
+* **Common Role Integration**: Universal system tasks like `app-setup`, `nodejs-setup`, `java-setup`, and `python-setup` are extracted into a `common` role to be shared across all microservices.
+* **Role Dependencies**: Specific services leverage the `meta` directory to automatically trigger prerequisite roles (e.g., ensuring `common` is ready before `shipping` starts).
+* **Dynamic Templating**: Uses Jinja2 templates (`.j2`) to inject environment variables, database endpoints, and port configurations at runtime.
+* **Reverse Proxy Logic**: Implements Nginx templates to route frontend traffic to backend microservices dynamically based on URI paths.
+* **Idempotent Database Loading**: Uses conditional checks and `register` variables to ensure schemas (MongoDB/MySQL) are only loaded if they are missing.
 
 
 
@@ -30,25 +29,36 @@ This project implements advanced Ansible features to manage a complex 3-tier app
 * **Orchestration**: Ansible
 * **Infrastructure**: AWS (EC2, Route53, Security Groups)
 * **OS Standards**: RHEL 9 / CentOS (Enterprise Standard)
-* **Languages**: NodeJS, Java (Maven), Python
+* **Languages**: NodeJS, Java (Maven), Python (uWSGI)
+* **Web Server**: Nginx (Reverse Proxy)
 * **Datastores**: MySQL, MongoDB, Redis, RabbitMQ
 
 ## 📂 Role Map
 
-| Role | Responsibility |
-| :--- | :--- |
-| **`common`** | Shared application and system-level setup logic. |
-| **`mongodb`** | NoSQL database configuration and schema loading. |
-| **`mysql`** | Relational database setup with idempotent security checks. |
-| **`redis`** | In-memory cache configuration for session management. |
-| **`rabbitmq`** | Message broker setup for asynchronous processing. |
-| **`catalogue`** | NodeJS-based microservice for product management. |
-| **`user`** | NodeJS-based authentication and profile service. |
-| **`shipping`** | Java-based service built with Maven. |
+| Role | Responsibility | Tech Stack |
+| :--- | :--- | :--- |
+| **`common`** | Shared application and system-level setup logic (NodeJS, Java, Python preparers). | Shell / Ansible |
+| **`mongodb`** | NoSQL database configuration and server installation. | NoSQL |
+| **`mysql`** | Relational database setup with idempotent security checks. | SQL |
+| **`catalogue`** | NodeJS microservice with idempotent MongoDB schema loading. | NodeJS |
+| **`shipping`** | Java-based service built with Maven; handles MySQL schema migration. | Java / Maven |
+| **`payment`** | Python-based microservice using uWSGI; connects to RabbitMQ. | Python |
+| **`frontend`** | Nginx web server deploying static UI and managing reverse proxy rules. | Nginx |
+| **`redis`** | In-memory cache configuration for session management. | In-Memory |
+| **`rabbitmq`** | Message broker setup for asynchronous processing. | Erlang/AMQP |
+
+
 
 ## 🚀 Execution & Usage
 
 ### 1. Provision Infrastructure
-Deploy the AWS resources:
-```bash
-ansible-playbook 01-create-infrastructure.yaml
+Deploy the AWS resources using the automation script:
+
+### To deploy all services using the centralized orchestration and ### Deploy Specific Service
+To target a single microservice (e.g., Payment) utilizing the variable-driven logic :
+
+```
+ansible-playbook -e component=all roboshop.yaml 
+
+
+ansible-playbook -e component=payment roboshop.yaml
